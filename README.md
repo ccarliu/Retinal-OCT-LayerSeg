@@ -1,3 +1,3 @@
-# Retinal-OCT-LayerSeg
+# Simultaneous Alignment and Surface Regression Using Hybrid 2D-3D Networks for 3DCoherent Layer Segmentation of Retina OCT Images
 
-Code in preparation; will be ready prior to the MICCAI 2021 conference.
+The preprocess code: https://github.com/YufanHe/oct_preprocess
