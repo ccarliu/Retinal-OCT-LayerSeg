@@ -27,7 +27,6 @@ def computeErrorStdMuOverPatientDimMean(predicitons, gts, hPixelSize=3.24, goodB
 
 class NCC:
 
-
     def __init__(self, win=None):
         self.win = win
 
@@ -86,7 +85,6 @@ class NCC:
         return -torch.mean(cc)
 
 class NCC_oct_metric:
-
 
     def __init__(self, win=None):
         self.win = win
@@ -153,7 +151,6 @@ class NCC_oct_metric:
         
 class NCC_oct:
 
-
     def __init__(self, win=None):
         self.win = win
 
@@ -217,6 +214,7 @@ class NCC_oct:
 
  
 class Grad_bscan:
+    
     def loss(self, y_true):
         I = y_true[:,:,:,:-1]
         J = y_true[:,:,:,1:]
@@ -224,6 +222,7 @@ class Grad_bscan:
         return loss
  
 class MSE_bscan:
+    
     def loss(self, y_true):
         losses = 0
         for i in range(y_true.shape[3]-1):
@@ -237,6 +236,7 @@ class MSE_bscan:
         return losses / y_true.shape[3]
         
 class Dice_intraBscan:
+    
     def loss(self, y_true):
         I = y_true[:,:,:,:-1]
         J = y_true[:,:,:,1:]
@@ -244,13 +244,11 @@ class Dice_intraBscan:
         
 class MSE:
 
-
     def loss(self, y_true, y_pred):
         return torch.mean((y_true - y_pred) ** 2)
 
 
 class Dice:
-
 
     def loss(self, y_true, y_pred):
         ndims = len(list(y_pred.size())) - 2
@@ -311,6 +309,7 @@ class MultiLayerCrossEntropyLoss():
         return loss
  
 class MultiSurfaceCrossEntropyLoss():
+    
     def __init__(self,  weight=None):
         self.m_weight = weight   # B,N,H,W, where N is the num of surfaces.
 
