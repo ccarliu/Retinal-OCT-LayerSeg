@@ -36,11 +36,10 @@ def getLayerLabels(surfaceLabels, height):
 class sd_oct_flattenp_align(torch.utils.data.Dataset):
     """ 
         dataset for a2a_sd_oct.
-        the root should be "/data3/layer_segmentation/a2a_oct".
         the train and valid sets are splited by the label.csv.
     """
     
-    def __init__(self, label_dir, data_name = "a2a_oct", valid_fold = 0, usage = "train", transform=None, inte_dis = False,step=40):
+    def __init__(self, label_dir, data_name = "a2a_oct", valid_fold = 0, usage = "train", transform=None, step=40):
         super(sd_oct_flattenp_align, self).__init__()
 
         self.data_path = []
@@ -48,7 +47,6 @@ class sd_oct_flattenp_align(torch.utils.data.Dataset):
         self.seg = []
         self.name = []
         self.step = step
-        self.inte_dis = inte_dis
         self.usage = usage
         self.valid_fold = valid_fold
 
@@ -65,8 +63,7 @@ class sd_oct_flattenp_align(torch.utils.data.Dataset):
             elif int(fold) != valid_fold and self.usage == "train":
                 self.data_path.append(path)
         print("load " + self.usage + " " + str(len(self.data_path)))
-        maxi = 0
-        mini = 512
+        
         # load data and seg
         for l in self.data_path:
             try:
@@ -85,10 +82,6 @@ class sd_oct_flattenp_align(torch.utils.data.Dataset):
                 continue
             if cur_seg.min() < 5 or cur_seg.max() > 315:
                 continue
-            if cur_seg.max() > maxi:
-                maxi = cur_seg.max()
-            if cur_seg.min() < mini:
-                mini = cur_seg.min()
 
             # normalization
             mu = np.mean(cur_img, axis=0)
