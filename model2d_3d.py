@@ -12,16 +12,15 @@ class SpatialTransformer2(nn.Module):
         super().__init__()
 
         self.mode = mode
-        #print(size)
+        
         # create sampling grid
         vectors = [torch.arange(0, s) for s in size]
-        #print(vectors)
         grids = torch.meshgrid(vectors)
-        #print(grids)
+
         grid = torch.stack(grids)
         grid = torch.unsqueeze(grid, 0)
         grid = grid.type(torch.FloatTensor)
-        #print(grid.shape)
+
         # registering the grid as a buffer cleanly moves it to the GPU, but it also
         # adds it to the state dict. this is annoying since everything in the state dict
         # is included when saving weights to disk, so the model files are way bigger
@@ -39,7 +38,7 @@ class SpatialTransformer2(nn.Module):
         # new locations
         new_locs = self.grid + flow
         shape = flow.shape[2:]
-        # print(new_locs.shape, self.grid.shape, flow.shape)
+
         # need to normalize grid values to [-1, 1] for resampler
         for i in range(len(shape)):
             new_locs[:, i, ...] = 2 * (new_locs[:, i, ...] / (shape[i] - 1) - 0.5)
@@ -58,13 +57,8 @@ class SpatialTransformer2(nn.Module):
 def computeMuVariance(x, layerMu=None, layerConf=None): # without square weight
     '''
     Compute the mean and variance along H direction of each surface.
-
-    :param x: in (BatchSize, NumSurface, H, W) dimension, the value is probability (after Softmax) along each Height direction
-           LayerMu: the referred surface mu from LayerProb, in size(B,N,W); where N = NumSurface.
-           LayerConf: the referred surface confidence from LayerProb, in size(B,N,W)
-    :return: mu:     mean in (BatchSize, NumSurface, W) dimension
-             sigma2: variance in (BatchSize, Numsurface, W) dimension
     '''
+    
     A =3.0  # weight factor to balance surfaceMu and LayerMu.
 
     device = x.device
@@ -72,31 +66,24 @@ def computeMuVariance(x, layerMu=None, layerConf=None): # without square weight
 
     # compute mu
     Y = torch.arange(H).view((1,1,H,1,1)).expand(x.size()).to(device=device, dtype=torch.int16)
-    # mu = torch.sum(x*Y, dim=-2, keepdim=True)
+
     # use slice method to compute P*Y
     for b in range(B):
         if 0==b:
             PY = (x[b,]*Y[b,]).unsqueeze(dim=0)
         else:
             PY = torch.cat((PY, (x[b,]*Y[b,]).unsqueeze(dim=0)))
+            
     mu = torch.sum(PY, dim=-3, keepdim=True) # size: B,N,1,W
     del PY  # hope to free memory.
     Mu = mu.expand(x.size())
 
-    #sigma2 = torch.sum(x*torch.pow(Y-Mu,2), dim=-2,keepdim=False)
     # this slice method is to avoid using big GPU memory .
     for b in range(B):
         if 0==b:
             sigma2 = torch.sum(x[b,]*torch.pow(Y[b,]-Mu[b,],2), dim=-3,keepdim=False).unsqueeze(dim=0)
         else:
             sigma2 = torch.cat((sigma2, torch.sum(x[b,]*torch.pow(Y[b,]-Mu[b,],2), dim=-3,keepdim=False).unsqueeze(dim=0)))
-
-    # very important, otherwise sigma2 will increase to make the loss small
-    # allowing sigma2 back propogation give better test result in the IVUS data.
-    # todo: for experiment: /local/vol00/scratch/Users/hxie1/Projects/DeepLearningSeg/OCTMultiSurfaces/testConfig/
-    #                      expUnetJHU_Surface_Layer_20200206/expUnetJHU_SurfaceNet_Sigma0_NoBPSigma_20200302_2.yaml
-    # for IVUS data, Not backpropagating simga does not give better result;
-    # sigma2 = sigma2.detach()
 
     return mu.squeeze(dim=-3),sigma2
 
