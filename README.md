@@ -9,3 +9,7 @@ The preprocess code: https://github.com/YufanHe/oct_preprocess
 
 1. public A2A OCT dataset: https://people.duke.edu/~sf59/RPEDC_Ophth_2013_dataset.htm
 2. public JHU OCT dataset: http://iacl.ece.jhu.edu/index.php/Resources
+
+## Contact
+
+If you have any questions, please do not hesitate to contact liuhong@stu.xmu.edu.cn
