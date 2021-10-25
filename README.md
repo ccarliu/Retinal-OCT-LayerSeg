@@ -4,7 +4,7 @@ Code for paper "Simultaneous Alignment and Surface Regression Using Hybrid 2D-3D
 
 The codes are implemented in PyTorch 1.4 and trained on NVIDIA 2080Ti GPUs.
 
-Parts of codes are borrowed from https://github.com/ccarliu/Retinal-OCT-LayerSeg.
+Parts of codes are borrowed from https://github.com/Hui-Xie/DeepLearningSeg.
 
 The preprocess code: https://github.com/YufanHe/oct_preprocess
 
