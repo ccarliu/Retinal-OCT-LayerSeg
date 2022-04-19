@@ -138,7 +138,7 @@ def train(epoch, train_loader):
 
         ncc_loss = ncc(x)
         sl1loss = smoothl1loss(mu, new_label)   # smooth_l1_loss # why use smooth l1
-        main_loss =  surface_ce + sl1loss + ncc_loss + lossgd + loss_grad * * args.weight_g + lossmse
+        main_loss =  surface_ce + sl1loss + ncc_loss + lossgd + loss_grad * args.weight_g + lossmse
  
         main_loss.backward()
 
