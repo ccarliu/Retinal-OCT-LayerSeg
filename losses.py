@@ -210,7 +210,7 @@ class NCC_oct:
             losses += -torch.mean(cc)
 
         
-        return losses / y_true.shape[4] - 1
+        return losses / y_true.shape[3] - 1
 
  
 class Grad_bscan:
