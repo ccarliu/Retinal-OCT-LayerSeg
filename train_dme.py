@@ -17,8 +17,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR,CosineAnnealingWarmRestar
 import scipy.ndimage
 import scipy.io as io
 
-from dataset import *
-from losses import *
+from dataset.dataset import *
+from loss.losses import *
 
 
 
