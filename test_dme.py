@@ -280,7 +280,7 @@ if __name__ == '__main__':
     valid(0, valid_loader)
    
     # get the metric
-    prediction_path = "./result/" + ck_name[:-4] + "new_doe"
+    prediction_path = "./checkpoint/" + ck_name[:-4] + "new_doe"
     target_path = args.data_dir
     
     prediction_files = glob.glob(os.path.join(prediction_path, "*.mat"))
