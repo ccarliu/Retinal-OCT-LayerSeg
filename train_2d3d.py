@@ -15,7 +15,7 @@ import scipy.ndimage
 import scipy.io as io
 
 from dataset import *
-from losses import *
+from loss.losses import *
 
 # for visualization
 from torch.utils.tensorboard import SummaryWriter   
