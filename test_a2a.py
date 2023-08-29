@@ -16,7 +16,7 @@ import scipy.io as io
 import time
 
 from dataset.dataset import *
-from losses import *
+from loss.losses import *
 
 # for visualization
 from torch.utils.tensorboard import SummaryWriter  
