@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from losses import *
+from loss.losses import *
 
 class SpatialTransformer2(nn.Module):
     """
