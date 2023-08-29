@@ -237,6 +237,105 @@ class OutputTransition(nn.Module):
         out = self.final_conv(x)
         return out
 
+class UNet3D_dual_up_hc(nn.Module):
+    # down_sample is 2d and up_sample is 3d
+    # to what is in the actual prototxt, not the intent
+    def __init__(self, n_layer=9,act='relu', input_size = (128, 48, 48), input_c = 1):
+        super(UNet3D_dual_up_hc, self).__init__()
+        self.n_layer = n_layer
+        print(input_c)
+        self.down_tr32 = DownTransition(input_c,32,act)
+        self.down_tr64 = DownTransition(32,64,act)
+        self.down_tr128 = DownTransition(64,128,act)
+        self.down_trf = DownTransition(128,128,act, pol = False)
+
+        self.up_tr256 = UpTransition(128, 128, 2,act)
+        self.up_tr128 = UpTransition(128, 64, 1,act)
+        self.up_tr64 = UpTransition(64,32,0,act)
+        
+        self.up1_tr256 = UpTransition(128, 128, 2,act)
+        self.up1_tr128 = UpTransition(128, 64, 1,act)
+        self.up1_tr64 = UpTransition(64,32,0,act)
+        
+        self.out_tr = OutputTransition(32, n_layer)
+        self.out_tr2 = OutputTransition(32, n_layer+1)
+        self.out_tr3 = OutputTransition(32, 1)
+        
+        self.out_pool = nn.AdaptiveAvgPool2d(1)
+        self.transformer = SpatialTransformer2((input_size[0], input_size[1], input_size[2])) 
+        self.transformer2 = SpatialTransformer2((input_size[0]//2, input_size[1]//2, input_size[2]))
+        self.transformer4 = SpatialTransformer2((input_size[0]//4, input_size[1]//4, input_size[2]))
+        self.transformer8 = SpatialTransformer2((input_size[0]//8, input_size[1]//8, input_size[2]))
+
+    def forward(self, xr):  
+        # 3d -> 2d
+        bs = xr.shape[0]
+        x = xr.permute(0,4,1,2,3)
+        x = torch.reshape(x, (x.shape[0] * x.shape[1], x.shape[2], x.shape[3], x.shape[4]))
+        
+        # feature extractor
+        out32, skip_out32 = self.down_tr32(x)
+        out64,skip_out64 = self.down_tr64(out32)
+        out128,skip_out128 = self.down_tr128(out64)
+        outf,skip_outf = self.down_trf(out128)
+    
+        # 2d -> 3d
+        skip_out128 = torch.reshape(skip_out128, (bs, skip_out128.shape[0] // bs, skip_out128.shape[1], skip_out128.shape[2], skip_out128.shape[3])).permute(0,2,3,4,1)
+        outf = torch.reshape(outf, (bs, outf.shape[0] // bs, outf.shape[1], outf.shape[2], outf.shape[3])).permute(0,2,3,4,1)
+        skip_out64 = torch.reshape(skip_out64, (bs, skip_out64.shape[0] // bs, skip_out64.shape[1], skip_out64.shape[2], skip_out64.shape[3])).permute(0,2,3,4,1)
+        skip_out32 = torch.reshape(skip_out32, (bs, skip_out32.shape[0] // bs, skip_out32.shape[1], skip_out32.shape[2], skip_out32.shape[3])).permute(0,2,3,4,1)
+        
+        #skip_out128 = torch.reshape(skip_out128, (bs, skip_out128.shape[0] // bs, skip_out128.shape[1], skip_out128.shape[2], skip_out128.shape[3])).permute(0,2,3,4,1)
+        
+        # alignment network
+        out_up1_128 = self.up1_tr256(outf.detach(),skip_out128.detach())
+        out_up1_64 = self.up1_tr128(out_up1_128, skip_out64.detach())
+        out_up1_32 = self.up1_tr64(out_up1_64, skip_out32.detach())
+        flow_out = self.out_tr3(out_up1_32).squeeze()
+        
+        #out_up1_32 = self.up1_tr64(out_up1_64, skip_out32.detach())
+        #flow_out = self.out_tr3(out_up1_32).squeeze()
+        
+        # flow
+        flow = torch.mean(flow_out, dim = [1,2], keepdim = True)
+        try:
+            flow = flow - torch.mean(flow, dim = 3, keepdim = True).detach()
+        except:
+            print(flow.shape, flow_out.shape, xr.shape)    
+        cshape = xr.shape
+        #cshape[1] = 1
+        flows = flow.expand(cshape[0], cshape[2], cshape[3], cshape[4])
+
+        x_out = self.transformer(xr, flows.unsqueeze(1)).squeeze(1)        
+        
+        # flows for each level of direct connection feature
+        flows18 = flow.unsqueeze(1).expand((outf.shape[0], 1, outf.shape[2], outf.shape[3], outf.shape[4])) * 1/8
+        flows14 = flow.unsqueeze(1).expand((skip_out128.shape[0], 1, skip_out128.shape[2], skip_out128.shape[3], skip_out128.shape[4])) * 1/4
+        flows12 = flow.unsqueeze(1).expand((skip_out64.shape[0], 1, skip_out64.shape[2], skip_out64.shape[3], skip_out64.shape[4])) * 1/2
+
+        # layer segmentation network
+        outfs = self.transformer8(outf, flows18)
+        skip_out128s = self.transformer4(skip_out128, flows14)
+        out_up_128 = self.up_tr256(outfs,skip_out128s)
+        skip_out64s = self.transformer2(skip_out64, flows12)
+        out_up_64 = self.up_tr128(out_up_128, skip_out64s)
+        skip_out32s = self.transformer(skip_out32, flows.unsqueeze(1))
+        out_up_32 = self.up_tr64(out_up_64, skip_out32s)
+        
+        # out
+        s = self.out_tr(out_up_32)
+        layer_out = self.out_tr2(out_up_32)
+        layerProb = logits2Prob(layer_out, 1)
+        out = logits2Prob(s, 2)
+
+        mu, sigma2 = computeMuVariance(out, layerMu=None, layerConf=None)
+        S = mu.clone()
+        
+        # relu for Topology Guarantee
+        for i in range(1,3):
+            S[:,i,:, :] = torch.where(S[:, i,:, :]< S[:,i-1,:,:], S[:,i-1,:, :], S[:,i,:,:])
+
+        return S, out, layerProb, mu, x_out, flow
          
 class UNet3D_dual_up(nn.Module):
     # down_sample is 2d and up_sample is 3d
