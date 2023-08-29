@@ -266,7 +266,7 @@ def cat_metric(name, result, target, flows, logits):
     
     file = open(ck_name[:-4] + ".csv", "w")
     file_c = csv.writer(file)
-    save_path = "./result/" + ck_name[:-4] + "new_doe"
+    save_path = "./checkpoint/" + ck_name[:-4] + "_result"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     for idx, l in enumerate(name_list):        
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     valid(0, valid_loader)
    
     # get the metric
-    prediction_path = "./checkpoint/" + ck_name[:-4] + "new_doe"
+    prediction_path = "./checkpoint/" + ck_name[:-4] + "_result"
     target_path = args.data_dir
     
     prediction_files = glob.glob(os.path.join(prediction_path, "*.mat"))
