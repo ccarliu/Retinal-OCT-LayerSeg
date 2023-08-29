@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix,accuracy_score,f1_score,roc_auc_sco
 import scipy.io as io
 
 
-from dataset import *
+from dataset.dataset import *
 from losses import *
 
 from torch.utils.tensorboard import SummaryWriter   
@@ -69,7 +69,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 
-args.ck_name = "proposed_seed_weightgnmodified.5_seed49_106_fold0_0.72%.t7"
+args.ck_name = "jhh.t7"
 
 # load checkpoint
 checkpoint = torch.load(os.path.join("./checkpoint/", args.ck_name))
