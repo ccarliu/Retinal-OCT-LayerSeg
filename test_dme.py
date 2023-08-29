@@ -15,10 +15,6 @@ import scipy.io as io
 
 from dataset.dataset import *
 from loss.losses import *
-
-# for visualization
-from torch.utils.tensorboard import SummaryWriter  
-
 # Set arguments and hyper-parameters.
 parser = argparse.ArgumentParser(description='baseline')
 parser.add_argument('--data_dir', default="/data3/lh/boe/ori/", type=str, help='Directory to load PCam data.')
