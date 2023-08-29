@@ -15,7 +15,7 @@ import scipy.io as io
 
 
 from dataset.dataset import *
-from losses import *
+from loss.losses import *
 
 from torch.utils.tensorboard import SummaryWriter   
 
