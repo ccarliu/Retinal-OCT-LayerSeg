@@ -15,7 +15,7 @@ import scipy.ndimage
 import scipy.io as io
 import time
 
-from dataset import *
+from dataset.dataset import *
 from losses import *
 
 # for visualization
@@ -67,9 +67,9 @@ print(args)
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # load checkpoint
-args.ck_name = "test_2_089_fold0_0.914%.t7"
+args.ck_name = "a2a.t7"
 ck_path = "./checkpoint/"
-checkpoint = torch.load("/home/lh/layer_segmentation_97/checkpoint_a2a/" + args.ck_name)
+checkpoint = torch.load(ck_path + args.ck_name)
 
 model = checkpoint["model"].module
 
