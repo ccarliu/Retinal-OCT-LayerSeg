@@ -36,6 +36,7 @@ parser.add_argument('--gpu', default='0', type=str, help='GPU Devices to use.')
 parser.add_argument('--batch_size', default=6, type=int, help='Batch size.')
 
 parser.add_argument('--lr', default=0.001, type=float, help='Starting learning rate.')
+parser.add_argument('--scheduler_type', default='cosine', type=str, help='GPU Devices to use.')
 parser.add_argument('--lr_decay', default=0.9, type=float, help='Learning rate decay.')
 parser.add_argument('--lr_decay_step', default=1, type=int, help='Learning rate decay step.')
 parser.add_argument('--label_inter', default=1, type=int, help='Sparse label inter.')
@@ -147,7 +148,13 @@ else:
     
 # set optimizer
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,weight_decay = args.weight_decay)
-scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=5, min_lr=1e-8, threshold=0.02, threshold_mode='rel')
+
+if args.scheduler_type == "cosine":
+    scheduler = CosineAnnealingLR(optimizer, T_max=args.T_max, eta_min=args.eta_min)
+elif args.scheduler_type == "reducelronpla" :
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=20, min_lr=1e-8, threshold=0.02, threshold_mode='rel')
+else:
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=args.step, gamma=args.gamma)
 
 model = model.to(device)
 model = nn.DataParallel(model)
