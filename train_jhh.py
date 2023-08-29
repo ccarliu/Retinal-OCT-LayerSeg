@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix,accuracy_score,f1_score,roc_auc_sco
 from torch.optim.lr_scheduler import CosineAnnealingLR,CosineAnnealingWarmRestarts,StepLR
 
 from dataset import *
-from losses import *
+from loss.losses import *
 
 import logging
 
