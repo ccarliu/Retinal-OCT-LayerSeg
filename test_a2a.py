@@ -66,12 +66,10 @@ print(args)
 # Set GPU device.
 os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-#"/home/lh/layer_segmentation_97/checkpoint_a2a/test_2_089_fold0_0.914%.t7"
 # load checkpoint
-ck_name = "nosmooth_inter8_038_fold0_0.981%.t7"
-ck_name = "test_2_089_fold0_0.914%.t7"
-ck_path = "./checkpoint_a2a/"
-checkpoint = torch.load("/home/lh/layer_segmentation_97/checkpoint_a2a/" + ck_name)
+args.ck_name = "test_2_089_fold0_0.914%.t7"
+ck_path = "./checkpoint/"
+checkpoint = torch.load("/home/lh/layer_segmentation_97/checkpoint_a2a/" + args.ck_name)
 
 model = checkpoint["model"].module
 
@@ -130,7 +128,7 @@ def valid(epoch, valid_loader):
     target = []
     metric = [] # mean_dis
     
-    store_path = os.path.join("/data3/layer_segmentation/", ck_name[:-3])
+    store_path = os.path.join("/data3/layer_segmentation/", args.ck_name[:-3])
     if not os.path.exists(store_path):
         os.mkdir(store_path)
     
@@ -151,57 +149,21 @@ def valid(epoch, valid_loader):
             flows.append(flow.detach().cpu()[:,:,:,:])
             names.extend(name) 
             continue
-            lossgd = Gloss(layerProb, layer_gt)  # diceloss
-            lossgd += mlloss(layerProb, layer_gt)   # layer_cross_entropy
             
-            
-            lossmse = bce_Bscan.loss((mu.detach()+flow.detach()) - flow).detach()
-            sl1loss = smoothl1loss(mu.cpu(), mask - flow.detach().cpu())   # smooth_l1_loss # why use smooth l1
-            # print(sl1loss, lossmse)
-            # print(name)
-            # print(flow)
-            try:
-                surface_ce = image_loss_func(logits.cpu(), mask - flow.detach().cpu())  # surface_cross_entropy
-            except:
-                continue
-            loss_grad = grad_loss.loss(mask,mask - flow.detach().cpu())# mu.detach()) # grad_loss
-            ncc_loss = ncc(x)
-            if True:
-                s1 = x.detach().cpu().numpy()
-                out1 = flow.detach().cpu().numpy()
-                cpath = os.path.join(store_path, name[0])
-                io.savemat(cpath, {"img":s1.squeeze(), "flow" : out1, "imgr": data.cpu().numpy(), "mask": mask.numpy()})
-            # if idx > 5:
-                # break
-            loss_nccs.append(ncc_loss.detach().cpu().numpy())
-
-            metric.append(meandis(s.cpu() + flow.detach().cpu(), mask).detach())
-            loss_sl1s.append(sl1loss.detach().numpy())
-            loss_grads.append(loss_grad.detach().cpu().numpy())
-            loss_gds.append(lossgd.detach().cpu().numpy())
-            surface_ces.append(surface_ce.detach().cpu().numpy())
-            names.extend(name) 
-            smooth_loss = sum(metric[-100:]) / min(len(metric), 100)
-            print(idx, smooth_loss, end = "\r")
     print()
-    print(len(names))
     
     end = time.clock()
-    print("fxxking", start - end)
-    exit(0)
+    print("time: ", start - end)
     
     result = torch.cat(result).numpy()
     target = torch.cat(target).numpy()
     flows = torch.cat(flows).numpy()
     cat_metric(names, result, target, flows)
-    print(target.shape)    
-    print(mean(metric), mean(loss_nccs), mean(surface_ces), mean(loss_sl1s), np.mean(loss_grads, 0), mean(loss_gds))
     
  
 def cat_metric(name, result, target, flows):
     print(flows.shape)
     name_list = list(set([l[:-6] for l in name]))
-    print(len(name_list), name_list[:5])
     n, nc, w, h = result.shape
     AMD_list = []
     NOR_list = []
@@ -241,7 +203,7 @@ def cat_metric(name, result, target, flows):
     denot = denot / mulot
     ft = ft / mft
     
-    rmean = np.abs(np.round(deno)-np.round(denot))
+    rmean = np.abs((deno)-(denot))
     print(rmean.mean() * 3.24)
     print(np.mean(rmean, (0,2,3)) * 3.24)
     AMD_mean = rmean[AMD_list]
@@ -255,10 +217,11 @@ def cat_metric(name, result, target, flows):
     means = np.mean(rmean, (2,3))
     #for idx, l in enumerate(name_list):
      #   print(l, means[idx])
+    '''
     
-    file = open(ck_name[:-3] + ".csv", "w")
+    file = open(args.ck_name[:-3] + ".csv", "w")
     file_c = csv.writer(file)
-    save_path = os.path.join("/data3/layer_segmentation/", ck_name[:-3] + "_result")
+    save_path = os.path.join("/data3/layer_segmentation/", args.ck_name[:-3] + "_result")
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     for idx, l in enumerate(name_list):
@@ -269,162 +232,11 @@ def cat_metric(name, result, target, flows):
         file_c.writerow([l, types, *means[idx]])
         cpath = os.path.join(save_path, l)
         io.savemat(cpath, {"prediction":deno[idx], "gt":denot[idx], "flow": ft[idx]})
+    '''
         
-def cat_metric_inter(name, result, target):
-    name_list = list(set([l[:-9] for l in name]))
-    print(len(name_list), name_list[:5])
-    n, nc, w, h = result.shape
-    AMD_list = []
-    NOR_list = []
-    
-    patch_size = 48
-    step = 10
-    
-    for idx,l in enumerate(name_list):
-        if "AMD" in l:
-            AMD_list.append(idx)
-        else:
-            NOR_list.append(idx)
-            
-    deno = np.zeros((len(name_list), nc, 400, 40))  # denominator
-    mulo = np.zeros((len(name_list), nc, 400, 40))  # molecule
-    
-    denot = np.zeros((len(name_list), nc, 400, 40))   # denominator
-    mulot = np.zeros((len(name_list), nc, 400, 40))   # molecule
-    
-    for idx, l in enumerate(name):
-        #print(result[idx], target[idx])
-        cname = l[:-9]
-        widx = int(l[-6:-3])
-        hidx = (int(l[-3:])-1) * 20
-        #print(widx)
-        nameidx = name_list.index(cname)
-        #print(nameidx)
-        deno[nameidx, :, widx: widx + 48, hidx:hidx+20] = deno[nameidx, :, widx: widx + 48, hidx:hidx+20] + result[idx,:,:,::2]
-        denot[nameidx, :, widx: widx + 48, hidx:hidx+20] = denot[nameidx, :, widx: widx + 48, hidx:hidx+20] + target[idx,:,:,::2]
-        
-        mulo[nameidx, :, widx: widx + 48, hidx:hidx+20] += 1
-        mulot[nameidx, :, widx: widx + 48, hidx:hidx+20] += 1
-    
-    deno = np.round(deno / mulo)
-    denot = np.round(denot / mulot)
-   
-    
-    rmean = np.abs(np.round(deno)-np.round(denot))
-    print(rmean.mean() * 3.24)
-    print(np.mean(rmean, (0,2,3)) * 3.24)
-    AMD_mean = rmean[AMD_list]
-    NOR_mean = rmean[NOR_list]
-    print("AMD:")
-    print(np.mean(AMD_mean, (0,2,3)) * 3.24)
-    
-    print("NOR:")
-    print(np.mean(NOR_mean, (0,2,3)) * 3.24)
-    
-    means = np.mean(rmean, (2,3))
-    #for idx, l in enumerate(name_list):
-     #   print(l, means[idx])
-    
-    file = open("result.csv", "w")
-    file_c = csv.writer(file)
-    save_path = "/data3/layer_segmentation/predictiontest/"
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
-    for idx, l in enumerate(name_list):
-        types = "control"
-        if "AMD" in l:
-            types = "AMD"
-        
-        file_c.writerow([l, types, *means[idx]])
-        cpath = os.path.join(save_path, l)
-        io.savemat(cpath, {"prediction":deno[idx], "gt":denot[idx]})
-        
-def cat_metric2(name, result, target):
-    name_list = list(set([l[:-9] for l in name]))
-    print(len(name_list), name_list[:5])
-    n, nc, w, h = result.shape
-    AMD_list = []
-    NOR_list = []
-    
-    patch_size = 48
-    step = 10
-    
-    for idx,l in enumerate(name_list):
-        if "AMD" in l:
-            AMD_list.append(idx)
-        else:
-            NOR_list.append(idx)
-            
-    deno = np.zeros((len(name_list), nc, 400, 40))  # denominator
-    mulo = np.zeros((len(name_list), nc, 400, 40))  # molecule
-    
-    denot = np.zeros((len(name_list), nc, 400, 40))   # denominator
-    mulot = np.zeros((len(name_list), nc, 400, 40))   # molecule
-    
-    for idx, l in enumerate(name):
-        #print(result[idx], target[idx])
-        cname = l[:-9]
-        widx = int(l[-6:-3])
-        hidx = (int(l[-3:]))
-        #print(hidx)
-        #print(widx)
-        nameidx = name_list.index(cname)
-        #print(nameidx)
-        deno[nameidx, :, widx: widx + 48, hidx:hidx+24] = deno[nameidx, :, widx: widx + 48, hidx:hidx+24] + result[idx,:,:,:]
-        denot[nameidx, :, widx: widx + 48, hidx:hidx+24] = denot[nameidx, :, widx: widx + 48, hidx:hidx+24] + target[idx,:,:,:]
-        
-        mulo[nameidx, :, widx: widx + 48, hidx:hidx+24] += 1
-        mulot[nameidx, :, widx: widx + 48, hidx:hidx+24] += 1
-    
-    deno = np.round(deno / mulo)
-    denot = np.round(denot / mulot)
-   
-    
-    rmean = np.abs(np.round(deno)-np.round(denot))
-    print(rmean.mean() * 3.24)
-    print(np.mean(rmean, (0,2,3)) * 3.24)
-    AMD_mean = rmean[AMD_list]
-    NOR_mean = rmean[NOR_list]
-    print("AMD:")
-    print(np.mean(AMD_mean, (0,2,3)) * 3.24)
-    
-    print("NOR:")
-    print(np.mean(NOR_mean, (0,2,3)) * 3.24)
-    
-    means = np.mean(rmean, (2,3))
-    #for idx, l in enumerate(name_list):
-     #   print(l, means[idx])
-    
-    file = open("result.csv", "w")
-    file_c = csv.writer(file)
-    save_path = "/data3/layer_segmentation/predictiontest/"
-    if not os.path.exists(save_path):
-        os.mkdir(save_path)
-    for idx, l in enumerate(name_list):
-        types = "control"
-        if "AMD" in l:
-            types = "AMD"
-        
-        file_c.writerow([l, types, *means[idx]])
-        cpath = os.path.join(save_path, l)
-        io.savemat(cpath, {"prediction":deno[idx], "gt":denot[idx]})
+
  
 if __name__ == '__main__':
     valid_loader= load_data(args.data_dir, args.label_dir)
     valid(0, valid_loader)
-    exit(0)
-    for epoch in range(args.start_epoch, args.epochs + 1):
-        print('\n************** Epoch: %d **************' % epoch)
-        train(epoch, train_loader)
-        print()
-        valid_loss = valid(epoch, valid_loader)
-        #scheduler.step()with open('redirect.txt', 'w') as f:
-        '''
-        old_stdout = sys.stdout
-        with open("a" + str(epoch) + ".log", 'w') as f:
-                
-            sys.stdout = f
-            for name, parms in model.named_parameters():
-                print(name, parms)
-                '''
-        scheduler.step(valid_loss)
+
