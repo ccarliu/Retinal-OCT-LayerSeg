@@ -150,7 +150,7 @@ else:
 optimizer = torch.optim.Adam(model.parameters(), lr=args.lr,weight_decay = args.weight_decay)
 
 if args.scheduler_type == "cosine":
-    scheduler = CosineAnnealingLR(optimizer, T_max=args.T_max, eta_min=args.eta_min)
+    scheduler = CosineAnnealingLR(optimizer, T_max=40, eta_min=3e-7)
 elif args.scheduler_type == "reducelronpla" :
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=20, min_lr=1e-8, threshold=0.02, threshold_mode='rel')
 else:
