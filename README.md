@@ -17,7 +17,7 @@ The preprocess code: https://github.com/YufanHe/oct_preprocess
 ## Introduce -- Train and test process
 Take the dme dataset as example:
 1. Data preparing: Down the dataset from [here](https://people.duke.edu/~sf59/Chiu_BOE_2014_dataset.htm)
-2. Environment preparing: The codes are implemented in ubuntu system. More requirements and virtual environment creation cound be seen in requirements.txt and run.sh. 
+2. Environment preparing: The codes are implemented in ubuntu system (python=3.7). More requirements and virtual environment creation cound be seen in requirements.txt and run.sh. 
 3. Training: Replace the datapath in the training command of run.sh, and run it. After training, the model will be stored in "./checkpoint". We provide pretrained models as described in our paper, together with the code.
 4. Testing: Replace the datapath and checkpoint path in the testing command of run.sh, and run it, which will do the test and print the result.
 
