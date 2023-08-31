@@ -1,3 +1,9 @@
+# environment
+conda create -n test python=3.7
+conda activate test
+pip install -r requirements.txt
+
+
 # for dme dataset:
 
 #CUDA_VISIBLE_DEVICES=0 python3 train_dme.py --gpu 0 --data_dir yourdatapath --batch_size 4 --name test --weight_decay 0.0005 --lr 0.005 --patch_size 48
