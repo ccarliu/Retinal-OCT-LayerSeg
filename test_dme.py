@@ -260,8 +260,6 @@ def cat_metric(name, result, target, flows, logits):
     ft = ft / mft
     logits_f = logits_f / logitsmulot
     
-    file = open(ck_name[:-4] + ".csv", "w")
-    file_c = csv.writer(file)
     save_path = "./checkpoint/" + ck_name[:-4] + "_result"
     if not os.path.exists(save_path):
         os.mkdir(save_path)
