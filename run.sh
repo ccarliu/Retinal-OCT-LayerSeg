@@ -1,7 +1,7 @@
 # environment
-conda create -n test python=3.7
-conda activate test
-pip install -r requirements.txt
+#conda create -n test python=3.7
+#conda activate test
+#pip install -r requirements.txt
 
 
 # for dme dataset:
