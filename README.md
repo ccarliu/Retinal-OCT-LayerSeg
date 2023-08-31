@@ -14,6 +14,8 @@ The preprocess code: https://github.com/YufanHe/oct_preprocess
 2. public JHU OCT dataset: http://iacl.ece.jhu.edu/index.php/Resources
 3. public DME dataset: https://people.duke.edu/~sf59/Chiu_BOE_2014_dataset.htm
 
+The codes are implemented with python>=3.7 and ubuntu system. More requirements cound be seen in requirements.txt.
+
 ## Introduce -- Train and test process
 Take the dme dataset as example:
 1. Data preparing: Down the dataset from [here](https://people.duke.edu/~sf59/Chiu_BOE_2014_dataset.htm)
