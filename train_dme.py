@@ -10,7 +10,7 @@ import numpy as np
 from numpy import *
 import torch.nn as nn
 from torch.utils.data.sampler import  WeightedRandomSampler
-from models import *
+from model2d_3d import *
 from sklearn.metrics import confusion_matrix,accuracy_score,f1_score,roc_auc_score,recall_score,precision_score
 from torch.optim.lr_scheduler import CosineAnnealingLR,CosineAnnealingWarmRestarts,StepLR
 
