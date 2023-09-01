@@ -365,7 +365,7 @@ def save_checkpoint(epoch, name = None):
         'acc': best_loss,
     }
     if name == None:
-        checkpoint_name = args.name + "_" +  str(epoch).zfill(3) + '_fold' + str(args.valid_fold) + "_"+ "best" + '%.t7'
+        checkpoint_name = args.name + "_" + "best" + '.t7'
     else:
         checkpoint_name = args.name + "_" + name + ".t7"
     torch.save(state, os.path.join(args.ckpt_dir, checkpoint_name))    
