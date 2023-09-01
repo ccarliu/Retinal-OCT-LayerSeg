@@ -1,6 +1,4 @@
 import os
-os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
-
 import argparse
 import torch
 import cv2
