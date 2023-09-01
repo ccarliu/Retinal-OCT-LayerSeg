@@ -36,7 +36,7 @@ parser.add_argument('--gpu', default='0', type=str, help='GPU Devices to use.')
 parser.add_argument('--batch_size', default=6, type=int, help='Batch size.')
 
 parser.add_argument('--lr', default=0.001, type=float, help='Starting learning rate.')
-parser.add_argument('--scheduler_type', default='cosine', type=str, help='GPU Devices to use.')
+parser.add_argument('--scheduler_type', default='reducelronpla', type=str, help='GPU Devices to use.')
 parser.add_argument('--lr_decay', default=0.9, type=float, help='Learning rate decay.')
 parser.add_argument('--lr_decay_step', default=1, type=int, help='Learning rate decay step.')
 parser.add_argument('--label_inter', default=1, type=int, help='Sparse label inter.')
