@@ -69,7 +69,6 @@ if args.resume_last:
     model = check["model"].module
     
 else:
-    model = UNet3D_cascade(n_layer = 3)
     model = UNet3D_dual_up(n_layer = 3)
 
 # set optimizer
