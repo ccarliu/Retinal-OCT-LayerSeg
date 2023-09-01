@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix,accuracy_score,f1_score,roc_auc_sco
 import scipy.ndimage
 import scipy.io as io
 
-from dataset import *
+from dataset.dataset import *
 from loss.losses import *
 
 # for visualization
